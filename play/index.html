@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="">
+    <head>
+        <title>{{ title }}</title>
+        <meta charset="UTF-8" />
+        <meta name="title" content="{{ title }}" />
+        <meta name="description" content="{{ description }}" />
+        <meta name="author" content="{{ author }}" />
+        <meta name="provider" content="{{ provider }}" />
+        <meta
+            name="viewport"
+            content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+        />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src data: * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; font-src * data: ; frame-src *; style-src * 'unsafe-inline'; worker-src 'self' blob:;" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+
+        <!-- TRACK CODE -->
+        <!-- END TRACK CODE -->
+
+        <!-- App Design -->
+        <meta name="msapplication-TileColor" content="{{ themeColor }}" />
+        <meta name="msapplication-TileImage" content="{{ msApplicationTileImage }}" />
+        <meta name="theme-color" content="{{ themeColor }}" />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ url }}">
+        <meta property="og:title" content="{{ title }}">
+        <meta property="og:description" content="{{ description }}">
+        <meta property="og:image" content="{{ cardImage }}">
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:url" content="{{ url }}">
+        <meta property="twitter:title" content="{{ title }}">
+        <meta property="twitter:description" content="{{ description }}">
+        <meta property="twitter:image" content="{{ cardImage }}">
+
+        <base href="/" />
+
+        <!-- Icons -->
+        {{#favIcons}}
+        <link rel="{{ rel }}" type="image/png" sizes="{{ sizes }}" href="{{ src }}" />
+        {{/favIcons}}
+        <link rel="manifest" href="/static/images/favicons/manifest.json?url={{ url }}" />
+
+        <style>
+            /*hide cowebsite container before scss is loaded*/
+            #cowebsite,
+            #chat-aside {
+                visibility: collapse;
+            }
+        </style>
+
+        <script>
+            if (localStorage && localStorage.getItem("debug_throttle")) {
+                // This is a TEMPORARY TEST MODE that overloads setTimeout to detect when Chrome is throttling the page.
+                // If you see this message in the console, it means that Chrome is throttling the page.
+                console.info("Debug mode: setTimeout/setInterval are overloaded to detect when Chrome is throttling the page.")
+
+                // To test, see: https://docs.google.com/document/d/11FhKHRcABGS4SWPFGwoL6g0ALMqrFKapCk5ZTKKupEk/edit
+                // google-chrome --enable-features="IntensiveWakeUpThrottling:grace_period_seconds/10,OptOutZeroTimeoutTimersFromThrottling,AllowAggressiveThrottlingWithWebSocket"
+
+                var _ = setTimeout;
+                var __ = setInterval;
+                window.setTimeout = function (callback, delay) {
+                    const startTimestamp = Date.now();
+                    return _(() => {
+                        const endTimestamp = Date.now();
+                        // If the delay is more than 500ms longer than expected, it means that Chrome throttled the page.
+                        if (endTimestamp - startTimestamp > delay + 500) {
+                            console.warn(
+                                'setTimeout was throttled by Chrome! Delay was ' +
+                                (endTimestamp - startTimestamp) +
+                                'ms, but should have been ' +
+                                delay +
+                                'ms.'
+                            );
+                            console.trace();
+                        }
+                        callback();
+                    }, delay);
+                };
+                window.setInterval = function (callback, delay) {
+                    let timestamp = Date.now();
+                    return __(() => {
+                        const newTimestamp = Date.now();
+                        if (newTimestamp - timestamp > delay + 500) {
+                            console.warn(
+                                'setInterval was throttled by Chrome! Delay was ' +
+                                (newTimestamp - timestamp) +
+                                'ms, but should have been ' +
+                                delay +
+                                'ms.'
+                            );
+                            console.trace();
+                        }
+                        timestamp = newTimestamp;
+                        callback();
+                    }, delay);
+                };
+            }
+        </script>
+        <script>
+            {{{ script }}}
+        </script>
+
+        {{#logRocketId}}
+            <!-- LogRocket -->
+            <input type="hidden" id="log-rocket-id" value="{{ logRocketId }}">
+            <input type="hidden" id="log-rocket-roomurl" value="{{ url }}">
+            <script src="https://cdn.lr-in-prod.com/LogRocket.min.js" crossorigin="anonymous"></script>
+            <script>
+                console.info('Start LogRocket script!');
+                window.addEventListener('DOMContentLoaded', (event) => {
+                    const logRocketId = document.getElementById('log-rocket-id').value;
+                    const roomUrl = document.getElementById('log-rocket-roomurl').value;
+                    window.LogRocket && window.LogRocket.init(logRocketId);
+
+                    // This is an example script - don't forget to change it!
+                    window.LogRocket.identify("{{ userId }}", {
+                        name: "{{ userId }}",
+                        // Add your own custom user variables here, ie:
+                        roomId: roomUrl
+                    });
+                });
+            </script>
+        {{/logRocketId}}
+
+        {{#googleDrivePickerClientId}}
+            <script type="text/javascript">
+                window.pickerInited = false;
+                window.gisInited = false;
+
+                /**
+                 * Callback after api.js is loaded.
+                 */
+                function gapiLoaded() {
+                    gapi.load('client:picker', initializePicker);
+                }
+
+                /**
+                 * Callback after the API client is loaded. Loads the
+                 * discovery doc to initialize the API.
+                 */
+                async function initializePicker() {
+                    await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+                    pickerInited = true;
+                }
+
+                /**
+                 * Callback after Google Identity Services are loaded.
+                 */
+                function gisLoaded() {
+                    window.gisInited = true;
+                }
+            </script>
+            <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+            <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+        {{/googleDrivePickerClientId}}
+
+    </head>
+    <body id="body" style="margin: 0;background-color:rgb(27, 42, 65);" class="text-white">
+        <input type="hidden" id="authToken" value="{{ authToken }}" name="authToken">
+        <input type="hidden" id="matrixLoginToken" value="{{ matrixLoginToken }}" name="matrixLoginToken">
+        <div id="app"></div>
+        <script type="module" src="/src/svelte.ts"></script>
+    </body>
+    {{{cssVariablesOverride}}}
+</html>

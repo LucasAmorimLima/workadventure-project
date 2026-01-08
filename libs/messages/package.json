@@ -1,0 +1,29 @@
+{
+  "name": "@workadventure/messages",
+  "version": "1.0.0",
+  "description": "Google Protobuf generated messages",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "author": "WorkAdventure",
+  "license": "ISC",
+  "dependencies": {
+    "@anatine/zod-openapi": "^1.3.0",
+    "@bufbuild/protobuf": "^2.2.2",
+    "@grpc/grpc-js": "^1.7.1",
+    "google-protobuf": "^3.21.0",
+    "long": "^5.2.1",
+    "openapi3-ts": "^3.0.2",
+    "rxjs": "6.6.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^18.7.17",
+    "typescript": "^5.7.2"
+  },
+  "files": [
+    "src"
+  ]
+}

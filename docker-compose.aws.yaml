@@ -1,0 +1,5 @@
+version: "3.5"
+# Este arquivo não precisa sobrescrever nada
+# O Traefik já está configurado corretamente para usar Host() no docker-compose.yaml
+# Com nip.io, os hosts serão resolvidos corretamente
+services: {}

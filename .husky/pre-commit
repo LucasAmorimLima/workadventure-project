@@ -1,0 +1,38 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+(
+cd messages || exit
+npm run precommit
+)
+(
+cd play || exit
+npm run precommit
+)
+(
+cd back || exit
+npm run precommit
+)
+(
+cd map-storage || exit
+npm run precommit
+)
+(
+cd tests || exit
+npm run precommit
+)
+(
+cd libs/map-editor || exit
+npm run precommit
+)
+(
+cd libs/shared-utils || exit
+npm run precommit
+)
+(
+cd libs/store-utils || exit
+npm run precommit
+)
+(
+cd contrib/tools/generate-env-docs || exit
+npm run generate
+)

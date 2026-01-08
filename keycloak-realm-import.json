@@ -1,0 +1,47 @@
+{
+  "realm": "workadventure",
+  "enabled": true,
+  "displayName": "WorkAdventure",
+  "loginTheme": "keycloak",
+  "clients": [
+    {
+      "clientId": "workadventure",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "secret": "n8YspAn3RoaJNhNmYmtVl2FeepaoLlgQ",
+      "redirectUris": [
+        "http://play.workadventure.localhost/*",
+        "http://localhost:3000/*",
+        "http://*.workadventure.localhost/*"
+      ],
+      "webOrigins": [
+        "http://play.workadventure.localhost",
+        "http://localhost:3000",
+        "http://*.workadventure.localhost"
+      ],
+      "attributes": {
+        "access.token.lifespan": "3600"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "teste",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Usuário",
+      "lastName": "Teste",
+      "email": "teste@workadventure.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "teste123",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

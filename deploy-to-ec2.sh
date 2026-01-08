@@ -50,7 +50,7 @@ ssh -i $KEY_FILE ubuntu@$SERVER_IP <<EOFCLONE
 set -e
 if [ ! -d "/home/ubuntu/workadventure/.git" ]; then
     echo "  📥 Clonando repositório..."
-    git clone --depth 1 https://github.com/workadventure/workadventure.git /home/ubuntu/workadventure
+    git clone --depth 1 https://github.com/LucasAmorimLima/workadventure-project.git /home/ubuntu/workadventure
 else
     echo "  📋 Repositório já existe"
 fi

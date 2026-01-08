@@ -28,6 +28,3 @@ synapse/media_store/*
 play/src/i18n/ko-KR/*.backup
 # Arquivos locais adicionados
 START.md
-docker-compose.keycloak-simple.yaml
-keycloak-realm-import.json
-maps/starter-kit/

@@ -101,7 +101,7 @@ case "$1" in
             docker_cmd "logs --tail=100 $2"
         fi
         ;;
-    
+
     logs-f)
         echo -e "${YELLOW}📊 Logs em tempo real (Ctrl+C para sair)${NC}"
         if [ -z "$2" ]; then
@@ -110,28 +110,28 @@ case "$1" in
             docker_cmd "logs -f $2"
         fi
         ;;
-    
+
     logs-tail)
         N=${2:-50}
         echo -e "${YELLOW}📊 Últimas $N linhas dos logs${NC}"
         docker_cmd "logs --tail=$N"
         ;;
-    
+
     status)
         echo -e "${YELLOW}📊 Status dos containers${NC}"
         docker_cmd "ps"
         ;;
-    
+
     stats)
         echo -e "${YELLOW}📊 Uso de recursos (Ctrl+C para sair)${NC}"
         remote_cmd "docker stats"
         ;;
-    
+
     ps)
         echo -e "${YELLOW}📊 Processos Docker${NC}"
         docker_cmd "ps -a"
         ;;
-    
+
     # GERENCIAMENTO
     restart)
         if [ -z "$2" ]; then
@@ -143,38 +143,38 @@ case "$1" in
         fi
         echo -e "${GREEN}✅ Reiniciado${NC}"
         ;;
-    
+
     stop)
         echo -e "${YELLOW}⏸️  Parando serviços...${NC}"
         docker_cmd "stop"
         echo -e "${GREEN}✅ Serviços parados${NC}"
         ;;
-    
+
     start)
         echo -e "${YELLOW}▶️  Iniciando serviços...${NC}"
         docker_cmd "start"
         echo -e "${GREEN}✅ Serviços iniciados${NC}"
         ;;
-    
+
     pull)
         echo -e "${YELLOW}📥 Atualizando imagens Docker...${NC}"
         docker_cmd "-f docker-compose.yaml -f docker-compose.keycloak-simple.yaml -f docker-compose-no-oidc.yaml -f docker-compose.no-synapse.yaml pull"
         echo -e "${GREEN}✅ Imagens atualizadas${NC}"
         ;;
-    
+
     recreate)
         echo -e "${YELLOW}♻️  Recriando containers...${NC}"
         docker_cmd "-f docker-compose.yaml -f docker-compose.keycloak-simple.yaml -f docker-compose-no-oidc.yaml -f docker-compose.no-synapse.yaml down"
         docker_cmd "-f docker-compose.yaml -f docker-compose.keycloak-simple.yaml -f docker-compose-no-oidc.yaml -f docker-compose.no-synapse.yaml up -d"
         echo -e "${GREEN}✅ Containers recriados${NC}"
         ;;
-    
+
     # ACESSO
     ssh)
         echo -e "${YELLOW}🔌 Conectando via SSH...${NC}"
         ssh -i $KEY_FILE ubuntu@$SERVER_IP
         ;;
-    
+
     shell)
         if [ -z "$2" ]; then
             echo -e "${RED}❌ Especifique o serviço: $0 shell <play|back|keycloak|...>${NC}"
@@ -183,7 +183,7 @@ case "$1" in
         echo -e "${YELLOW}💻 Abrindo shell em $2...${NC}"
         docker_cmd "exec -it $2 /bin/sh"
         ;;
-    
+
     exec)
         if [ -z "$2" ] || [ -z "$3" ]; then
             echo -e "${RED}❌ Uso: $0 exec <service> <command>${NC}"
@@ -193,19 +193,19 @@ case "$1" in
         shift 2
         docker_cmd "exec $SERVICE $@"
         ;;
-    
+
     # ARQUIVOS
     env)
         echo -e "${YELLOW}📄 Arquivo .env${NC}"
         remote_cmd "cd $PROJECT_DIR && cat .env"
         ;;
-    
+
     env-edit)
         echo -e "${YELLOW}✏️  Editando .env (nano)${NC}"
         ssh -i $KEY_FILE -t ubuntu@$SERVER_IP "cd $PROJECT_DIR && nano .env"
         echo -e "${YELLOW}💡 Reinicie os serviços para aplicar: $0 restart${NC}"
         ;;
-    
+
     upload)
         if [ -z "$2" ]; then
             echo -e "${RED}❌ Uso: $0 upload <arquivo>${NC}"
@@ -215,7 +215,7 @@ case "$1" in
         scp -i $KEY_FILE "$2" ubuntu@$SERVER_IP:$PROJECT_DIR/
         echo -e "${GREEN}✅ Arquivo enviado${NC}"
         ;;
-    
+
     download)
         if [ -z "$2" ]; then
             echo -e "${RED}❌ Uso: $0 download <arquivo>${NC}"
@@ -225,7 +225,7 @@ case "$1" in
         scp -i $KEY_FILE ubuntu@$SERVER_IP:$PROJECT_DIR/"$2" .
         echo -e "${GREEN}✅ Arquivo baixado${NC}"
         ;;
-    
+
     # DIAGNÓSTICO
     health)
         echo -e "${YELLOW}🏥 Verificando saúde dos serviços${NC}"
@@ -243,7 +243,7 @@ case "$1" in
         echo "WorkAdventure: http://$SERVER_IP/"
         echo "Keycloak: http://$SERVER_IP/keycloak/admin"
         ;;
-    
+
     disk)
         echo -e "${YELLOW}💾 Uso de disco${NC}"
         remote_cmd "df -h"
@@ -251,21 +251,21 @@ case "$1" in
         echo "=== Docker ==="
         remote_cmd "docker system df"
         ;;
-    
+
     network)
         echo -e "${YELLOW}🌐 Informações de rede${NC}"
         echo "IP Público: $SERVER_IP"
         echo ""
         remote_cmd "ip addr show | grep 'inet '"
         ;;
-    
+
     # AWS
     aws-stop)
         echo -e "${YELLOW}⏸️  Parando instância EC2...${NC}"
         aws ec2 stop-instances --instance-ids $INSTANCE_ID --region $REGION
         echo -e "${GREEN}✅ Instância parando (economizando custos)${NC}"
         ;;
-    
+
     aws-start)
         echo -e "${YELLOW}▶️  Iniciando instância EC2...${NC}"
         aws ec2 start-instances --instance-ids $INSTANCE_ID --region $REGION
@@ -276,25 +276,25 @@ case "$1" in
         echo -e "${YELLOW}💡 Novo IP: $NEW_IP${NC}"
         echo "   Atualize deployment-info.txt se necessário"
         ;;
-    
+
     aws-reboot)
         echo -e "${YELLOW}🔄 Reiniciando instância EC2...${NC}"
         aws ec2 reboot-instances --instance-ids $INSTANCE_ID --region $REGION
         echo -e "${GREEN}✅ Instância reiniciando${NC}"
         ;;
-    
+
     aws-info)
         echo -e "${YELLOW}☁️  Informações da instância${NC}"
         aws ec2 describe-instances --instance-ids $INSTANCE_ID --region $REGION \
           --query 'Reservations[0].Instances[0].{ID:InstanceId,Type:InstanceType,State:State.Name,IP:PublicIpAddress}' \
           --output table
         ;;
-    
+
     # HELP
     help|"")
         show_menu
         ;;
-    
+
     *)
         echo -e "${RED}❌ Comando desconhecido: $1${NC}"
         echo ""

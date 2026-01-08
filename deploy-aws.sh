@@ -75,14 +75,14 @@ if ! aws ec2 describe-security-groups --group-names $SECURITY_GROUP_NAME --regio
       --region $REGION \
       --query 'GroupId' \
       --output text)
-    
+
     # Adicionar regras
     aws ec2 authorize-security-group-ingress --group-id $SG_ID --region $REGION \
       --ip-permissions \
         IpProtocol=tcp,FromPort=22,ToPort=22,IpRanges='[{CidrIp=0.0.0.0/0,Description="SSH"}]' \
         IpProtocol=tcp,FromPort=80,ToPort=80,IpRanges='[{CidrIp=0.0.0.0/0,Description="HTTP"}]' \
         IpProtocol=tcp,FromPort=443,ToPort=443,IpRanges='[{CidrIp=0.0.0.0/0,Description="HTTPS"}]' > /dev/null 2>&1
-    
+
     echo -e "${GREEN}   ✅ Security Group criado: $SG_ID${NC}"
 else
     SG_ID=$(aws ec2 describe-security-groups --group-names $SECURITY_GROUP_NAME --region $REGION --query "SecurityGroups[0].GroupId" --output text)

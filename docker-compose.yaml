@@ -204,7 +204,7 @@ services:
       - ./maps:/var/www/html
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.maps.rule=Host(`maps.workadventure.localhost`)"
+      - "traefik.http.routers.maps.rule=Host(`${MAPS_HOST:-maps.workadventure.localhost}`)"
       - "traefik.http.routers.maps.entryPoints=web,traefik"
       - "traefik.http.services.maps.loadbalancer.server.port=80"
 

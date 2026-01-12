@@ -35,8 +35,8 @@ services:
       KC_HTTP_ENABLED: true
       KC_HEALTH_ENABLED: true
       KC_HTTP_RELATIVE_PATH: /keycloak
-      KC_HOSTNAME_URL: http://play.workadventure.localhost/keycloak
-      KC_HOSTNAME_ADMIN_URL: http://play.workadventure.localhost/keycloak
+      KC_HOSTNAME_URL: ${KC_HOSTNAME_URL:-http://play.workadventure.localhost/keycloak}
+      KC_HOSTNAME_ADMIN_URL: ${KC_HOSTNAME_ADMIN_URL:-http://play.workadventure.localhost/keycloak}
       OPENID_CLIENT_SECRET: ${OPENID_CLIENT_SECRET}
     command:
       - start
@@ -45,7 +45,7 @@ services:
       - ./keycloak-realm-import.json:/opt/keycloak/data/import/realm.json:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.keycloak.rule=Host(`play.workadventure.localhost`) && PathPrefix(`/keycloak`)"
+      - "traefik.http.routers.keycloak.rule=Host(`${FRONT_HOST:-play.workadventure.localhost}`) && PathPrefix(`/keycloak`)"
       - "traefik.http.routers.keycloak.entryPoints=web"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
     depends_on:

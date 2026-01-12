@@ -16,7 +16,7 @@ echo ""
 
 # Configurações
 INSTANCE_NAME="${INSTANCE_NAME:-workadventure-prod}"
-INSTANCE_TYPE="${INSTANCE_TYPE:-t3.medium}"  # 2 vCPU, 4GB RAM
+INSTANCE_TYPE="${INSTANCE_TYPE:-t3.large}"  # 2 vCPU, 8GB RAM
 REGION="${AWS_REGION:-us-east-1}"
 KEY_NAME="${KEY_NAME:-workadventure-key}"
 SECURITY_GROUP_NAME="${SECURITY_GROUP_NAME:-workadventure-sg}"
@@ -99,42 +99,114 @@ AMI_ID=$(aws ec2 describe-images \
   --output text)
 echo "   AMI: $AMI_ID"
 
-# User data script para instalação automática
 USER_DATA=$(cat <<'EOF'
 #!/bin/bash
-set -e
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
-# Log
-exec > >(tee /var/log/workadventure-setup.log)
-exec 2>&1
+echo "🚀 Iniciando deploy WorkAdventure..."
 
-echo "🚀 Iniciando setup WorkAdventure..."
-
-# Atualizar sistema
+# Instalar dependências
+echo "📦 Instalando Docker e Git..."
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+apt-get install -y git curl
 
-# Instalar Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
 sh get-docker.sh
 systemctl enable docker
 systemctl start docker
-
-# Adicionar usuário ubuntu ao grupo docker
 usermod -aG docker ubuntu
 
-# Instalar Docker Compose
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# Criar diretório do projeto
-mkdir -p /opt/workadventure
-cd /opt/workadventure
+# Detectar IP público ANTES do su
+echo "🌐 Obtendo IP público..."
+PUBLIC_IP=""
+for i in {1..10}; do
+    TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s)
+    PUBLIC_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/public-ipv4)
+    if [ ! -z "$PUBLIC_IP" ]; then
+        break
+    fi
+    echo "Tentativa $i: aguardando metadata service..."
+    sleep 2
+done
 
-# Criar flag de conclusão
-touch /var/log/workadventure-ready
+if [ -z "$PUBLIC_IP" ]; then
+    echo "❌ ERRO: Não foi possível obter o IP público!"
+    exit 1
+fi
 
-echo "✅ Setup básico concluído!"
+echo "✅ IP detectado: $PUBLIC_IP"
+PLAY_HOST="play.$PUBLIC_IP.nip.io"
+MAPS_HOST="maps.$PUBLIC_IP.nip.io"
+
+# Configurar WorkAdventure
+echo "📥 Clonando repositório..."
+su - ubuntu -c "
+cd /home/ubuntu
+git clone --depth 1 https://github.com/LucasAmorimLima/workadventure-project.git workadventure
+cd workadventure
+
+echo \"🌐 Configurando com IP: $PUBLIC_IP\"
+
+echo \"⚙️ Criando .env...\"
+cat > .env << 'ENVFILE'
+# URLs com nip.io
+PUSHER_URL=http://$PLAY_HOST
+ADMIN_URL=http://$PLAY_HOST/admin
+FRONT_HOST=$PLAY_HOST
+FRONT_URL=http://$PLAY_HOST
+VITE_URL=http://$PLAY_HOST
+
+# Secret Key (obrigatório)
+SECRET_KEY=\$(openssl rand -base64 32)
+
+# Keycloak
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=\$(openssl rand -base64 32)
+KEYCLOAK_DB_PASSWORD=\$(openssl rand -base64 32)
+OPENID_CLIENT_ID=workadventure
+OPENID_CLIENT_SECRET=\$(openssl rand -base64 32)
+OPENID_CLIENT_ISSUER=http://$PLAY_HOST/keycloak/realms/workadventure
+OPENID_LOGOUT_REDIRECT_URL=http://$PLAY_HOST/keycloak/realms/workadventure/protocol/openid-connect/logout
+KC_HOSTNAME_URL=http://$PLAY_HOST/keycloak
+KC_HOSTNAME_ADMIN_URL=http://$PLAY_HOST/keycloak
+
+# Configurações
+DISABLE_ANONYMOUS=true
+ENABLE_CHAT=false
+START_ROOM_URL=/_/global/$MAPS_HOST/starter-kit/office.tmj
+MAP_STORAGE_URL=map-storage:50053
+ENVFILE
+sed -i \"s|\\\$PLAY_HOST|$PLAY_HOST|g\" .env
+sed -i \"s|\\\$MAPS_HOST|$MAPS_HOST|g\" .env
+
+echo \"🔐 Atualizando Keycloak realm...\"
+OPENID_SECRET=\$(grep OPENID_CLIENT_SECRET .env | cut -d= -f2-)
+sed -i \"s|\\\"secret\\\": \\\"[^\\\"]*\\\"|\\\"secret\\\": \\\"\$OPENID_SECRET\\\"|\" keycloak-realm-import.json
+sed -i \"s|play.workadventure.localhost|$PLAY_HOST|g\" keycloak-realm-import.json
+sed -i \"s|\\*.workadventure.localhost|*.$PLAY_HOST|g\" keycloak-realm-import.json
+sed -i \"s|localhost:3000|$PLAY_HOST|g\" keycloak-realm-import.json
+
+echo \"🚀 Iniciando containers...\"
+docker compose \\
+  -f docker-compose.yaml \\
+  -f docker-compose.keycloak-simple.yaml \\
+  -f docker-compose-no-oidc.yaml \\
+  -f docker-compose.no-synapse.yaml \\
+  up -d
+
+echo \"✅ Deploy concluído!\"
+echo \"🌐 URL: http://$PLAY_HOST\"
+echo \"🔑 Keycloak: http://$PLAY_HOST/keycloak/admin\"
+echo \"👤 Usuário teste: teste / teste123\"
+
+# Salvar info
+echo \"http://$PLAY_HOST\" > /home/ubuntu/workadventure-url.txt
+"
+
+echo "✅ WorkAdventure configurado e rodando!"
 EOF
 )
 
@@ -181,8 +253,9 @@ echo "🔌 Conectar via SSH:"
 echo "   ssh -i ${KEY_NAME}.pem ubuntu@${PUBLIC_IP}"
 echo ""
 echo "📦 Próximos passos:"
-echo "   1. Aguarde ~2 minutos para o setup automático concluir"
-echo "   2. Execute: ./deploy-project.sh $PUBLIC_IP"
+echo "   1. Aguarde ~5 minutos para instalação completa"
+echo "   2. Acesse: http://play.$PUBLIC_IP.nip.io"
+echo "   3. Login: teste / teste123"
 echo ""
 echo "📝 Arquivo de informações salvo em: deployment-info.txt"
 
@@ -197,13 +270,29 @@ Região: $REGION
 Chave SSH: ${KEY_NAME}.pem
 Security Group: $SG_ID
 
+URLs:
+-----
+Play: http://play.$PUBLIC_IP.nip.io
+Keycloak Admin: http://play.$PUBLIC_IP.nip.io/keycloak/admin
+Maps: http://maps.$PUBLIC_IP.nip.io
+
+Login Teste:
+  Usuário: teste
+  Senha: teste123
+
 Comandos úteis:
 ---------------
 # Conectar SSH
 ssh -i ${KEY_NAME}.pem ubuntu@${PUBLIC_IP}
 
-# Ver logs de setup
-ssh -i ${KEY_NAME}.pem ubuntu@${PUBLIC_IP} "tail -f /var/log/workadventure-setup.log"
+# Ver logs de deploy
+ssh -i ${KEY_NAME}.pem ubuntu@${PUBLIC_IP} "tail -f /var/log/user-data.log"
+
+# Ver containers
+ssh -i ${KEY_NAME}.pem ubuntu@${PUBLIC_IP} "cd workadventure && docker compose ps"
+
+# Ver logs de containers
+ssh -i ${KEY_NAME}.pem ubuntu@${PUBLIC_IP} "cd workadventure && docker compose logs -f"
 
 # Parar instância
 aws ec2 stop-instances --instance-ids $INSTANCE_ID --region $REGION
@@ -215,9 +304,9 @@ aws ec2 start-instances --instance-ids $INSTANCE_ID --region $REGION
 aws ec2 terminate-instances --instance-ids $INSTANCE_ID --region $REGION
 EOL
 
-echo -e "${YELLOW}💡 Aguardando setup automático (2 min)...${NC}"
-sleep 120
+echo -e "${YELLOW}💡 Deploy automático em andamento...${NC}"
+echo -e "${YELLOW}⏳ Tempo estimado: 5-10 minutos${NC}"
 
 echo ""
-echo -e "${GREEN}✅ Pronto! Agora execute:${NC}"
-echo -e "${YELLOW}   ./deploy-project.sh $PUBLIC_IP${NC}"
+echo -e "${GREEN}✅ Instância criada! Aguarde a instalação completar.${NC}"
+echo -e "${YELLOW}   Acompanhe: ssh -i ${KEY_NAME}.pem ubuntu@${PUBLIC_IP} 'tail -f /var/log/user-data.log'${NC}"

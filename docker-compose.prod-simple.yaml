@@ -1,0 +1,71 @@
+version: "3.5"
+services:
+  play:
+    image: thecodingmachine/workadventure-play:master
+    environment:
+      DEBUG_MODE: "${DEBUG_MODE:-false}"
+      JITSI_URL: "${JITSI_URL:-}"
+      JITSI_PRIVATE_MODE: "${JITSI_PRIVATE_MODE:-false}"
+      ENABLE_MAP_EDITOR: "${ENABLE_MAP_EDITOR:-}"
+      SECRET_KEY: "${SECRET_KEY}"
+      ALLOWED_CORS_ORIGIN: "${ALLOWED_CORS_ORIGIN:-*}"
+      PUSHER_URL: "${PUSHER_URL}"
+      FRONT_URL: "${FRONT_URL}"
+      UPLOADER_URL: http://uploader:8080
+      ADMIN_URL: "${ADMIN_URL}"
+      ADMIN_API_TOKEN: "${ADMIN_API_TOKEN:-}"
+      ADMIN_API_URL: "${ADMIN_API_URL:-}"
+      ADMIN_SOCKETS_TOKEN: "${ADMIN_SOCKETS_TOKEN:-}"
+      START_ROOM_URL: "${START_ROOM_URL}"
+      STUN_SERVER: "${STUN_SERVER:-stun:stun.l.google.com:19302}"
+      TURN_SERVER: "${TURN_SERVER:-}"
+      TURN_USER: "${TURN_USER:-}"
+      TURN_PASSWORD: "${TURN_PASSWORD:-}"
+      TURN_STATIC_AUTH_SECRET: "${TURN_STATIC_AUTH_SECRET:-}"
+      DISABLE_ANONYMOUS: "${DISABLE_ANONYMOUS:-false}"
+      ENABLE_CHAT: "${ENABLE_CHAT:-false}"
+      ENABLE_CHAT_UPLOAD: "${ENABLE_CHAT_UPLOAD:-}"
+      MAX_PER_GROUP: "${MAX_PER_GROUP:-4}"
+      MAX_USERNAME_LENGTH: "${MAX_USERNAME_LENGTH:-10}"
+      DISABLE_NOTIFICATIONS: "${DISABLE_NOTIFICATIONS:-true}"
+      SKIP_RENDER_OPTIMIZATIONS: "${SKIP_RENDER_OPTIMIZATIONS:-false}"
+      # OpenID Connect
+      OPENID_CLIENT_ID: "${OPENID_CLIENT_ID:-}"
+      OPENID_CLIENT_SECRET: "${OPENID_CLIENT_SECRET:-}"
+      OPENID_CLIENT_ISSUER: "${OPENID_CLIENT_ISSUER:-}"
+      OPENID_CLIENT_ISSUER_INTERNAL: "${OPENID_CLIENT_ISSUER_INTERNAL:-}"
+      OPENID_LOGOUT_REDIRECT_URL: "${OPENID_LOGOUT_REDIRECT_URL:-}"
+      # Map Storage
+      MAP_STORAGE_URL: "${MAP_STORAGE_URL}"
+      MAP_STORAGE_API_TOKEN: "${MAP_STORAGE_API_TOKEN}"
+      PUBLIC_MAP_STORAGE_URL: "${PUBLIC_MAP_STORAGE_URL:-}"
+      ICON_URL: "${ICON_URL:-}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.play.rule=Host(`${PUSHER_URL:-play.workadventure.localhost}`)"
+      - "traefik.http.routers.play.entryPoints=web"
+      - "traefik.http.services.play.loadbalancer.server.port=3000"
+
+  back:
+    image: thecodingmachine/workadventure-back:master
+    environment:
+      SECRET_KEY: "${SECRET_KEY}"
+      ADMIN_API_TOKEN: "${ADMIN_API_TOKEN:-}"
+      ADMIN_API_URL: "${ADMIN_API_URL:-}"
+      TURN_STATIC_AUTH_SECRET: "${TURN_STATIC_AUTH_SECRET:-}"
+      MAX_PER_GROUP: "${MAX_PER_GROUP:-4}"
+      JITSI_URL: "${JITSI_URL:-}"
+      JITSI_ISS: "${JITSI_ISS:-}"
+      BBB_URL: "${BBB_URL:-}"
+      BBB_SECRET: "${BBB_SECRET:-}"
+      ENABLE_CHAT: "${ENABLE_CHAT:-false}"
+      MAP_STORAGE_URL: "${MAP_STORAGE_URL}"
+      MAP_STORAGE_API_TOKEN: "${MAP_STORAGE_API_TOKEN}"
+      PROMETHEUS_AUTHORIZATION_TOKEN: "${PROMETHEUS_AUTHORIZATION_TOKEN:-}"
+
+  map-storage:
+    image: thecodingmachine/workadventure-map-storage:master
+    environment:
+      AUTHENTICATION_STRATEGY: Basic
+      AUTHENTICATION_USER: map-storage
+      AUTHENTICATION_PASSWORD: "${MAP_STORAGE_API_TOKEN}"

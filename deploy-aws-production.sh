@@ -124,15 +124,15 @@ services:
       - ./maps:/usr/share/nginx/html:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.maps.rule=Host(\\\`maps.\\\${DOMAIN:-maps.workadventure.localhost}\\\`)"
+      - "traefik.http.routers.maps.rule=Host(\`maps.\${DOMAIN:-maps.workadventure.localhost}\`)"
       - "traefik.http.routers.maps.entryPoints=web"
-      - "traefik.http.routers.maps-ssl.rule=Host(\\\`maps.\\\${DOMAIN:-maps.workadventure.localhost}\\\`)"
+      - "traefik.http.routers.maps-ssl.rule=Host(\`maps.\${DOMAIN:-maps.workadventure.localhost}\`)"
       - "traefik.http.routers.maps-ssl.entryPoints=websecure"
       - "traefik.http.routers.maps-ssl.tls=true"
       - "traefik.http.routers.maps-ssl.tls.certresolver=myresolver"
       - "traefik.http.services.maps.loadbalancer.server.port=80"
       - "traefik.http.middlewares.maps-cors.headers.accesscontrolallowmethods=GET,OPTIONS"
-      - "traefik.http.middlewares.maps-cors.headers.accesscontrolalloworiginlist=https://\\\${DOMAIN:-workadventure.localhost}"
+      - "traefik.http.middlewares.maps-cors.headers.accesscontrolalloworiginlist=https://\${DOMAIN:-workadventure.localhost}"
       - "traefik.http.middlewares.maps-cors.headers.accesscontrolmaxage=100"
       - "traefik.http.middlewares.maps-cors.headers.addvaryheader=true"
       - "traefik.http.routers.maps-ssl.middlewares=maps-cors"

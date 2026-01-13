@@ -201,14 +201,17 @@ sed -i "s|^OPENID_CLIENT_ID=.*|OPENID_CLIENT_ID=workadventure|" .env
 sed -i "s|^OPENID_CLIENT_SECRET=.*|OPENID_CLIENT_SECRET=\$OPENID_SECRET|" .env
 sed -i "s|^OPENID_CLIENT_ISSUER=.*|OPENID_CLIENT_ISSUER=https://${DOMAIN}/keycloak/realms/workadventure|" .env
 sed -i "s|^OPENID_PROFILE_SCREEN_PROVIDER=.*|OPENID_PROFILE_SCREEN_PROVIDER=Keycloak|" .env
-sed -i "s|^OPID_WOKA_NAME_POLICY=.*|OPID_WOKA_NAME_POLICY=force_opid|" .env
+sed -i "s|^OPENID_WOKA_NAME_POLICY=.*|OPENID_WOKA_NAME_POLICY=force_opid|" .env
+grep -q "^OPENID_WOKA_NAME_POLICY=" .env || echo "OPENID_WOKA_NAME_POLICY=force_opid" >> .env
 sed -i "s|^DISABLE_ANONYMOUS=.*|DISABLE_ANONYMOUS=true|" .env
-echo "AUTHENTICATION_STRATEGY=openid" >> .env
+grep -q "^DISABLE_ANONYMOUS=" .env || echo "DISABLE_ANONYMOUS=true" >> .env
+sed -i "s|^OPENID_USERNAME_CLAIM=.*|OPENID_USERNAME_CLAIM=preferred_username|" .env
+grep -q "^OPENID_USERNAME_CLAIM=" .env || echo "OPENID_USERNAME_CLAIM=preferred_username" >> .env
+sed -i "s|^OPENID_SCOPE=.*|OPENID_SCOPE=openid profile email|" .env
+grep -q "^OPENID_SCOPE=" .env || echo "OPENID_SCOPE=openid profile email" >> .env
 
-# Adicionar AUTHENTICATION_STRATEGY ao docker-compose.prod.yaml
-echo "🔧 Adicionando variáveis de autenticação ao docker-compose..."
-sed -i '/DISABLE_ANONYMOUS/a\      - AUTHENTICATION_STRATEGY' docker-compose.prod.yaml
-sed -i 's|OPENID_WOKA_NAME_POLICY|OPID_WOKA_NAME_POLICY|' docker-compose.prod.yaml
+# Corrigir variáveis de autenticação no docker-compose (não é necessário - nome já está correto)
+echo "🔧 Configurações OIDC aplicadas..."
 
 # Atualizar redirect URIs no Keycloak realm
 echo "🔧 Configurando Keycloak redirect URIs..."

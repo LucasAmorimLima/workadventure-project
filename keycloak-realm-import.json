@@ -15,12 +15,15 @@
       "redirectUris": [
         "http://play.workadventure.localhost/*",
         "http://localhost:3000/*",
-        "http://*.workadventure.localhost/*"
+        "http://*.workadventure.localhost/*",
+        "https://*"
       ],
       "webOrigins": [
         "http://play.workadventure.localhost",
         "http://localhost:3000",
-        "http://*.workadventure.localhost"
+        "http://*.workadventure.localhost",
+        "https://*",
+        "+"
       ],
       "attributes": {
         "access.token.lifespan": "3600"

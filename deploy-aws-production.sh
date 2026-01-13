@@ -200,6 +200,7 @@ grep -q "^KC_HOSTNAME_ADMIN_URL=" .env || echo "KC_HOSTNAME_ADMIN_URL=https://${
 sed -i "s|^OPENID_CLIENT_ID=.*|OPENID_CLIENT_ID=workadventure|" .env
 sed -i "s|^OPENID_CLIENT_SECRET=.*|OPENID_CLIENT_SECRET=\$OPENID_SECRET|" .env
 sed -i "s|^OPENID_CLIENT_ISSUER=.*|OPENID_CLIENT_ISSUER=https://${DOMAIN}/keycloak/realms/workadventure|" .env
+sed -i "s|^OPENID_PROFILE_SCREEN_PROVIDER=.*|OPENID_PROFILE_SCREEN_PROVIDER=Keycloak|" .env
 sed -i "s|^DISABLE_ANONYMOUS=.*|DISABLE_ANONYMOUS=true|" .env
 echo "AUTHENTICATION_STRATEGY=openid" >> .env
 

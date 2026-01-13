@@ -4,7 +4,6 @@ services:
   # ============================================
   keycloak-db:
     image: postgres:15-alpine
-    container_name: keycloak-db
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
@@ -22,7 +21,6 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
-    container_name: keycloak
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
@@ -45,8 +43,14 @@ services:
       - ./keycloak-realm-import.json:/opt/keycloak/data/import/realm.json:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.keycloak.rule=Host(`${FRONT_HOST:-play.workadventure.localhost}`) && PathPrefix(`/keycloak`)"
+      - "traefik.http.routers.keycloak.rule=Host(`${DOMAIN:-play.workadventure.localhost}`) && PathPrefix(`/keycloak`)"
       - "traefik.http.routers.keycloak.entryPoints=web"
+      - "traefik.http.routers.keycloak.priority=100"
+      - "traefik.http.routers.keycloak-ssl.rule=Host(`${DOMAIN:-play.workadventure.localhost}`) && PathPrefix(`/keycloak`)"
+      - "traefik.http.routers.keycloak-ssl.entryPoints=websecure"
+      - "traefik.http.routers.keycloak-ssl.priority=100"
+      - "traefik.http.routers.keycloak-ssl.tls=true"
+      - "traefik.http.routers.keycloak-ssl.tls.certresolver=myresolver"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
     depends_on:
       keycloak-db:

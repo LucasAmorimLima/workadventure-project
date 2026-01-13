@@ -90,26 +90,28 @@ curl -o docker-compose.keycloak-simple.yaml https://raw.githubusercontent.com/Lu
 curl -o keycloak-realm-import.json https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/keycloak-realm-import.json
 
 # Baixar mapas completos com tilesets
-echo "📥 Baixando mapas com tilesets..."
+echo "📥 Baixando mapas starter-kit do WorkAdventure..."
+
+# Mapa starter-kit (escritório completo com várias salas)
 mkdir -p maps/starter-kit/tilesets
 cd maps/starter-kit
 
-# Baixar mapas
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/office.tmj
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/conference.tmj
+# Baixar mapas TMJ
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/office.tmj"
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/conference.tmj"
 
-# Baixar tilesets
+# Baixar tilesets necessários
 cd tilesets
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Decoration.png
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Exterior.png
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Logo_Long.png
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Miscellaneous.png
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Other_Furniture.png
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Room_Builder.png
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Seats.png
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Special_Zones.png
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Tables.png
-curl -O https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_User_Interface.png
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Decoration.png"
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Exterior.png"
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Logo_Long.png"
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Music.png"
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Pixel_Art.png"
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Room_Builder.png"
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Special_Jitsi.png"
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Special.png"
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Statue.png"
+curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Title_Screen_Day.png"
 
 cd /home/ubuntu/workadventure
 
@@ -201,17 +203,20 @@ sed -i "s|^OPENID_CLIENT_ID=.*|OPENID_CLIENT_ID=workadventure|" .env
 sed -i "s|^OPENID_CLIENT_SECRET=.*|OPENID_CLIENT_SECRET=\$OPENID_SECRET|" .env
 sed -i "s|^OPENID_CLIENT_ISSUER=.*|OPENID_CLIENT_ISSUER=https://${DOMAIN}/keycloak/realms/workadventure|" .env
 sed -i "s|^OPENID_PROFILE_SCREEN_PROVIDER=.*|OPENID_PROFILE_SCREEN_PROVIDER=Keycloak|" .env
-sed -i "s|^OPENID_WOKA_NAME_POLICY=.*|OPENID_WOKA_NAME_POLICY=force_opid|" .env
-grep -q "^OPENID_WOKA_NAME_POLICY=" .env || echo "OPENID_WOKA_NAME_POLICY=force_opid" >> .env
+sed -i "s|^OPID_WOKA_NAME_POLICY=.*|OPID_WOKA_NAME_POLICY=force_opid|" .env
 sed -i "s|^DISABLE_ANONYMOUS=.*|DISABLE_ANONYMOUS=true|" .env
-grep -q "^DISABLE_ANONYMOUS=" .env || echo "DISABLE_ANONYMOUS=true" >> .env
 sed -i "s|^OPENID_USERNAME_CLAIM=.*|OPENID_USERNAME_CLAIM=preferred_username|" .env
-grep -q "^OPENID_USERNAME_CLAIM=" .env || echo "OPENID_USERNAME_CLAIM=preferred_username" >> .env
-sed -i "s|^OPENID_SCOPE=.*|OPENID_SCOPE=openid profile email|" .env
-grep -q "^OPENID_SCOPE=" .env || echo "OPENID_SCOPE=openid profile email" >> .env
 
-# Corrigir variáveis de autenticação no docker-compose (não é necessário - nome já está correto)
-echo "🔧 Configurações OIDC aplicadas..."
+# Adicionar AUTHENTICATION_STRATEGY se não existir
+sed -i "s|^AUTHENTICATION_STRATEGY=.*|AUTHENTICATION_STRATEGY=openid|" .env
+grep -q "^AUTHENTICATION_STRATEGY=" .env || echo "AUTHENTICATION_STRATEGY=openid" >> .env
+
+# Corrigir nome da variável no docker-compose
+echo "🔧 Corrigindo variáveis de autenticação no docker-compose..."
+sed -i 's|OPENID_WOKA_NAME_POLICY|OPID_WOKA_NAME_POLICY|' docker-compose.prod.yaml
+
+# Adicionar AUTHENTICATION_STRATEGY ao docker-compose.prod.yaml (serviço play)
+sed -i '/- DISABLE_ANONYMOUS/a\      - AUTHENTICATION_STRATEGY' docker-compose.prod.yaml
 
 # Atualizar redirect URIs no Keycloak realm
 echo "🔧 Configurando Keycloak redirect URIs..."
@@ -228,6 +233,20 @@ docker compose \
 
 echo "⏳ Aguardando serviços iniciarem (60 segundos)..."
 sleep 60
+
+# Aplicar patch para forçar autenticação Keycloak (corrige bug no WorkAdventure master)
+echo "🔧 Aplicando patch para forçar autenticação via Keycloak..."
+docker exec workadventure-play-1 sed -i 's/DEFAULT_GUEST_NAME === undefined/(DEFAULT_GUEST_NAME === undefined || DEFAULT_GUEST_NAME === "")/' /usr/src/play/src/pusher/controllers/AuthenticateController.ts 2>/dev/null || true
+docker exec workadventure-play-1 sed -i 's/defaultGuestName: DEFAULT_GUEST_NAME,/defaultGuestName: DEFAULT_GUEST_NAME === "" ? undefined : DEFAULT_GUEST_NAME,/' /usr/src/play/src/pusher/services/LocalAdmin.ts 2>/dev/null || true
+
+# Reiniciar play para aplicar patches
+docker compose \
+  -f docker-compose.prod.yaml \
+  -f docker-compose.keycloak-simple.yaml \
+  -f docker-compose.maps.yaml \
+  restart play
+
+sleep 30
 
 # Corrigir redirect_uri no Keycloak database
 echo "🔧 Configurando redirect_uri no Keycloak database..."

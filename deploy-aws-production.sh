@@ -203,6 +203,10 @@ sed -i "s|^OPENID_CLIENT_ISSUER=.*|OPENID_CLIENT_ISSUER=https://${DOMAIN}/keyclo
 sed -i "s|^DISABLE_ANONYMOUS=.*|DISABLE_ANONYMOUS=true|" .env
 echo "AUTHENTICATION_STRATEGY=openid" >> .env
 
+# Adicionar AUTHENTICATION_STRATEGY ao docker-compose.prod.yaml
+echo "🔧 Adicionando AUTHENTICATION_STRATEGY ao docker-compose..."
+sed -i '/DISABLE_ANONYMOUS/a\      - AUTHENTICATION_STRATEGY' docker-compose.prod.yaml
+
 # Atualizar redirect URIs no Keycloak realm
 echo "🔧 Configurando Keycloak redirect URIs..."
 sed -i "s|http://play.workadventure.localhost|https://${DOMAIN}|g" keycloak-realm-import.json

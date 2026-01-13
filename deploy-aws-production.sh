@@ -1,11 +1,9 @@
 #!/bin/bash
 
-# Script de deployment para WorkAdventure com domínio customizado
-# Inclui todas as correções: Keycloak, Maps com HTTPS, CORS, etc.
 
 AWS_REGION="us-east-1"
 INSTANCE_TYPE="t3.large"
-AMI_ID="ami-0e2c8caa4b6378d8c"  # Ubuntu 24.04 LTS
+AMI_ID="ami-0e2c8caa4b6378d8c"
 KEY_NAME="workadventure-key"
 SECURITY_GROUP_NAME="workadventure-sg"
 
@@ -49,14 +47,14 @@ SECURITY_GROUP_ID=$(aws ec2 create-security-group \
     --query 'SecurityGroups[0].GroupId' \
     --output text)
 
-# Add security group rules
+
 aws ec2 authorize-security-group-ingress --group-id "$SECURITY_GROUP_ID" --protocol tcp --port 22 --cidr 0.0.0.0/0 --region "$AWS_REGION" 2>/dev/null || true
 aws ec2 authorize-security-group-ingress --group-id "$SECURITY_GROUP_ID" --protocol tcp --port 80 --cidr 0.0.0.0/0 --region "$AWS_REGION" 2>/dev/null || true
 aws ec2 authorize-security-group-ingress --group-id "$SECURITY_GROUP_ID" --protocol tcp --port 443 --cidr 0.0.0.0/0 --region "$AWS_REGION" 2>/dev/null || true
 
 echo "✅ Security group created: $SECURITY_GROUP_ID"
 
-# Create user-data script
+
 echo "📝 Creating user-data script..."
 cat > user-data.sh << USERDATA_EOF
 #!/bin/bash
@@ -203,6 +201,7 @@ sed -i "s|^OPENID_CLIENT_ID=.*|OPENID_CLIENT_ID=workadventure|" .env
 sed -i "s|^OPENID_CLIENT_SECRET=.*|OPENID_CLIENT_SECRET=\$OPENID_SECRET|" .env
 sed -i "s|^OPENID_CLIENT_ISSUER=.*|OPENID_CLIENT_ISSUER=https://${DOMAIN}/keycloak/realms/workadventure|" .env
 sed -i "s|^DISABLE_ANONYMOUS=.*|DISABLE_ANONYMOUS=true|" .env
+echo "AUTHENTICATION_STRATEGY=openid" >> .env
 
 # Atualizar redirect URIs no Keycloak realm
 echo "🔧 Configurando Keycloak redirect URIs..."

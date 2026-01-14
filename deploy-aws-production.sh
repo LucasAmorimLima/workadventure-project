@@ -165,6 +165,9 @@ sed -i "s|VERSION=.*|VERSION=master|" .env
 sed -i "s|ADMIN_API_TOKEN=.*|ADMIN_API_TOKEN=\$ADMIN_TOKEN|" .env
 sed -i "s|SECRET_JITSI_KEY=.*|SECRET_JITSI_KEY=\$JITSI_SECRET|" .env
 
+# Configurar STUN server (necessário para WebRTC funcionar em NATs)
+sed -i "s|^STUN_SERVER=.*|STUN_SERVER=stun:stun.l.google.com:19302|" .env
+
 # Adicionar FRONT_HOST (necessário para evitar erros de DNS)
 if ! grep -q "^FRONT_HOST=" .env; then
     echo "FRONT_HOST=${DOMAIN}" >> .env

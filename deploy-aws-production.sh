@@ -98,11 +98,18 @@ echo "📥 Baixando mapas starter-kit do seu repositório (sem Jitsi)..."
 
 # Mapa starter-kit (escritório completo com várias salas)
 mkdir -p maps/starter-kit/tilesets
+mkdir -p maps/starter
 cd maps/starter-kit
 
 # Baixar mapas TMJ do SEU repositório (sem Jitsi)
 curl -sfLO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/office.tmj"
 curl -sfLO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/conference.tmj"
+
+# Criar link simbólico para compatibilidade com /starter/map.json
+cd ../starter
+ln -sf ../starter-kit/office.tmj map.json
+ln -sf ../starter-kit/tilesets tilesets
+cd ../starter-kit
 
 # Baixar TODOS os tilesets necessários do repositório oficial
 cd tilesets

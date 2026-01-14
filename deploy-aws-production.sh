@@ -115,18 +115,21 @@ curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-projec
 
 cd /home/ubuntu/workadventure
 
-# Criar docker-compose para mapas com HTTPS
 cat > docker-compose.maps.yaml << 'MAPS_EOF'
 services:
   maps:
     image: nginx:alpine
     volumes:
       - ./maps:/usr/share/nginx/html:ro
+    environment:
+      - AUTHENTICATION_USER=admin
+      - AUTHENTICATION_PASSWORD=uma_senha_forte
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.maps.rule=Host(\`maps.\${DOMAIN:-maps.workadventure.localhost}\`)"
+      - "traefik.http.routers.maps.rule=Host(\`maps.${DOMAIN:-maps.workadventure.localhost}\`)"
       - "traefik.http.routers.maps.entryPoints=web"
-      - "traefik.http.routers.maps-ssl.rule=Host(\`maps.\${DOMAIN:-maps.workadventure.localhost}\`)"
+      - "traefik.http.routers.maps-ssl.rule=Host(\`maps.${DOMAIN:-maps.workadventure.localhost}\`)"
       - "traefik.http.routers.maps-ssl.entryPoints=websecure"
       - "traefik.http.routers.maps-ssl.tls=true"
       - "traefik.http.routers.maps-ssl.tls.certresolver=myresolver"
@@ -203,20 +206,16 @@ sed -i "s|^OPENID_CLIENT_ID=.*|OPENID_CLIENT_ID=workadventure|" .env
 sed -i "s|^OPENID_CLIENT_SECRET=.*|OPENID_CLIENT_SECRET=\$OPENID_SECRET|" .env
 sed -i "s|^OPENID_CLIENT_ISSUER=.*|OPENID_CLIENT_ISSUER=https://${DOMAIN}/keycloak/realms/workadventure|" .env
 sed -i "s|^OPENID_PROFILE_SCREEN_PROVIDER=.*|OPENID_PROFILE_SCREEN_PROVIDER=Keycloak|" .env
-sed -i "s|^OPID_WOKA_NAME_POLICY=.*|OPID_WOKA_NAME_POLICY=force_opid|" .env
+sed -i "s|^OPENID_WOKA_NAME_POLICY=.*|OPENID_WOKA_NAME_POLICY=force_opid|" .env
+grep -q "^OPENID_WOKA_NAME_POLICY=" .env || echo "OPENID_WOKA_NAME_POLICY=force_opid" >> .env
 sed -i "s|^DISABLE_ANONYMOUS=.*|DISABLE_ANONYMOUS=true|" .env
 sed -i "s|^OPENID_USERNAME_CLAIM=.*|OPENID_USERNAME_CLAIM=preferred_username|" .env
+grep -q "^OPENID_USERNAME_CLAIM=" .env || echo "OPENID_USERNAME_CLAIM=preferred_username" >> .env
 
-# Adicionar AUTHENTICATION_STRATEGY se não existir
-sed -i "s|^AUTHENTICATION_STRATEGY=.*|AUTHENTICATION_STRATEGY=openid|" .env
-grep -q "^AUTHENTICATION_STRATEGY=" .env || echo "AUTHENTICATION_STRATEGY=openid" >> .env
+# Adicionar NODE_TLS_REJECT_UNAUTHORIZED para evitar erros de SSL
+grep -q "^NODE_TLS_REJECT_UNAUTHORIZED=" .env || echo "NODE_TLS_REJECT_UNAUTHORIZED=0" >> .env
 
-# Corrigir nome da variável no docker-compose
-echo "🔧 Corrigindo variáveis de autenticação no docker-compose..."
-sed -i 's|OPENID_WOKA_NAME_POLICY|OPID_WOKA_NAME_POLICY|' docker-compose.prod.yaml
-
-# Adicionar AUTHENTICATION_STRATEGY ao docker-compose.prod.yaml (serviço play)
-sed -i '/- DISABLE_ANONYMOUS/a\      - AUTHENTICATION_STRATEGY' docker-compose.prod.yaml
+# Não precisamos de AUTHENTICATION_STRATEGY - o WorkAdventure detecta automaticamente pelo OPENID_CLIENT_ID
 
 # Atualizar redirect URIs no Keycloak realm
 echo "🔧 Configurando Keycloak redirect URIs..."
@@ -224,46 +223,66 @@ sed -i "s|http://play.workadventure.localhost|https://${DOMAIN}|g" keycloak-real
 sed -i "s|http://localhost:3000|https://${DOMAIN}|g" keycloak-realm-import.json
 sed -i "s|http://\*.workadventure.localhost|https://${DOMAIN}|g" keycloak-realm-import.json
 
-echo "🚀 Iniciando containers..."
+# Adicionar NODE_TLS_REJECT_UNAUTHORIZED ao serviço play no docker-compose.prod.yaml
+echo "🔧 Adicionando NODE_TLS_REJECT_UNAUTHORIZED ao docker-compose..."
+if ! grep -q "NODE_TLS_REJECT_UNAUTHORIZED" docker-compose.prod.yaml; then
+  sed -i '/- DISABLE_ANONYMOUS/a\      - NODE_TLS_REJECT_UNAUTHORIZED=0' docker-compose.prod.yaml
+fi
+
+# IMPORTANTE: Iniciar primeiro apenas os serviços base (sem play) para que o Keycloak possa iniciar e obter certificados
+echo "🚀 Iniciando serviços base (reverse-proxy, redis, keycloak)..."
+docker compose \
+  -f docker-compose.prod.yaml \
+  -f docker-compose.keycloak-simple.yaml \
+  -f docker-compose.maps.yaml \
+  up -d reverse-proxy redis keycloak-db keycloak maps
+
+# Aguardar Keycloak ficar saudável antes de continuar
+echo "⏳ Aguardando Keycloak iniciar (pode levar até 5 minutos na primeira vez)..."
+for i in {1..60}; do
+  if docker exec workadventure-keycloak-1 curl -sf http://localhost:8080/keycloak/health/ready > /dev/null 2>&1; then
+    echo "✅ Keycloak está pronto!"
+    break
+  fi
+  echo "   Aguardando Keycloak... (\$i/60)"
+  sleep 5
+done
+
+# Verificar se o certificado Let's Encrypt foi emitido
+echo "⏳ Aguardando certificado SSL ser emitido..."
+sleep 30
+
+# Agora iniciar todos os serviços restantes (back, play, map-storage, uploader, icon)
+echo "🚀 Iniciando demais serviços (play, back, map-storage)..."
 docker compose \
   -f docker-compose.prod.yaml \
   -f docker-compose.keycloak-simple.yaml \
   -f docker-compose.maps.yaml \
   up -d
 
-echo "⏳ Aguardando serviços iniciarem (60 segundos)..."
+echo "⏳ Aguardando serviços estabilizarem (60 segundos)..."
 sleep 60
 
-# Aplicar patch para forçar autenticação Keycloak (corrige bug no WorkAdventure master)
-echo "🔧 Aplicando patch para forçar autenticação via Keycloak..."
-docker exec workadventure-play-1 sed -i 's/DEFAULT_GUEST_NAME === undefined/(DEFAULT_GUEST_NAME === undefined || DEFAULT_GUEST_NAME === "")/' /usr/src/play/src/pusher/controllers/AuthenticateController.ts 2>/dev/null || true
-docker exec workadventure-play-1 sed -i 's/defaultGuestName: DEFAULT_GUEST_NAME,/defaultGuestName: DEFAULT_GUEST_NAME === "" ? undefined : DEFAULT_GUEST_NAME,/' /usr/src/play/src/pusher/services/LocalAdmin.ts 2>/dev/null || true
+# Verificar se o Play consegue conectar ao Keycloak
+echo "🔍 Verificando conectividade com Keycloak..."
+if curl -sf "https://${DOMAIN}/keycloak/realms/workadventure/.well-known/openid-configuration" > /dev/null 2>&1; then
+  echo "✅ Keycloak OIDC endpoint está acessível!"
+else
+  echo "⚠️ Keycloak OIDC endpoint ainda não está acessível. Reiniciando play..."
+  docker compose \
+    -f docker-compose.prod.yaml \
+    -f docker-compose.keycloak-simple.yaml \
+    -f docker-compose.maps.yaml \
+    restart play
+  sleep 30
+fi
 
-# Reiniciar play para aplicar patches
-docker compose \
-  -f docker-compose.prod.yaml \
-  -f docker-compose.keycloak-simple.yaml \
-  -f docker-compose.maps.yaml \
-  restart play
-
-sleep 30
-
-# Corrigir redirect_uri no Keycloak database
-echo "🔧 Configurando redirect_uri no Keycloak database..."
-docker exec workadventure-keycloak-db-1 psql -U keycloak -d keycloak -c "UPDATE redirect_uris SET value = 'https://${DOMAIN}/*' WHERE client_id = (SELECT id FROM client WHERE client_id = 'workadventure');" 2>/dev/null || echo "⚠️ Aviso: Falha ao atualizar redirect_uri (tentará novamente após restart)"
+# Corrigir redirect_uri no Keycloak database (se necessário)
+echo "🔧 Verificando configuração de redirect_uri no Keycloak..."
+docker exec workadventure-keycloak-db-1 psql -U keycloak -d keycloak -c "UPDATE redirect_uris SET value = 'https://${DOMAIN}/*' WHERE client_id = (SELECT id FROM client WHERE client_id = 'workadventure') AND value NOT LIKE 'https://%';" 2>/dev/null || echo "⚠️ Aviso: Não foi possível atualizar redirect_uri"
 
 # Atualizar web_origins para CORS
-docker exec workadventure-keycloak-db-1 psql -U keycloak -d keycloak -c "UPDATE web_origins SET value = 'https://${DOMAIN}' WHERE client_id = (SELECT id FROM client WHERE client_id = 'workadventure');" 2>/dev/null
-
-# Reiniciar Keycloak para aplicar mudanças
-echo "🔄 Reiniciando Keycloak..."
-docker compose \
-  -f docker-compose.prod.yaml \
-  -f docker-compose.keycloak-simple.yaml \
-  -f docker-compose.maps.yaml \
-  restart keycloak reverse-proxy
-
-sleep 30
+docker exec workadventure-keycloak-db-1 psql -U keycloak -d keycloak -c "UPDATE web_origins SET value = 'https://${DOMAIN}' WHERE client_id = (SELECT id FROM client WHERE client_id = 'workadventure') AND value NOT LIKE 'https://%';" 2>/dev/null || true
 
 echo ""
 echo "=========================================="

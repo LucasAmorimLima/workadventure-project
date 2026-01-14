@@ -89,29 +89,31 @@ echo "📥 Baixando customizações (Keycloak + Mapas)..."
 curl -o docker-compose.keycloak-simple.yaml https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/docker-compose.keycloak-simple.yaml
 curl -o keycloak-realm-import.json https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/keycloak-realm-import.json
 
-# Baixar mapas completos com tilesets
-echo "📥 Baixando mapas starter-kit do WorkAdventure..."
+# Baixar mapas completos com tilesets do repositório oficial
+echo "📥 Baixando mapas starter-kit do WorkAdventure (repositório oficial)..."
 
 # Mapa starter-kit (escritório completo com várias salas)
 mkdir -p maps/starter-kit/tilesets
 cd maps/starter-kit
 
-# Baixar mapas TMJ
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/office.tmj"
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/conference.tmj"
+# Baixar mapas TMJ do repositório oficial
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/office.tmj"
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/meeting-room.tmj"
 
-# Baixar tilesets necessários
+# Baixar TODOS os tilesets necessários do repositório oficial
 cd tilesets
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Decoration.png"
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Exterior.png"
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Logo_Long.png"
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Music.png"
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Pixel_Art.png"
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Room_Builder.png"
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Special_Jitsi.png"
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Special.png"
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Statue.png"
-curl -sO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/tilesets/WA_Title_Screen_Day.png"
+echo "📥 Baixando tilesets..."
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/tilesets/WA_Decoration.png"
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/tilesets/WA_Exterior.png"
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/tilesets/WA_Logo_Long.png"
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/tilesets/WA_Miscellaneous.png"
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/tilesets/WA_Other_Furniture.png"
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/tilesets/WA_Room_Builder.png"
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/tilesets/WA_Seats.png"
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/tilesets/WA_Special_Zones.png"
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/tilesets/WA_Tables.png"
+curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/tilesets/WA_User_Interface.png"
+echo "✅ Tilesets baixados!"
 
 cd /home/ubuntu/workadventure
 

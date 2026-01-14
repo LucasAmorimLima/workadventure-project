@@ -93,16 +93,16 @@ curl -o keycloak-realm-import.json https://raw.githubusercontent.com/LucasAmorim
 mkdir -p wa/letsencrypt
 chmod 700 wa/letsencrypt
 
-# Baixar mapas completos com tilesets do repositório oficial
-echo "📥 Baixando mapas starter-kit do WorkAdventure (repositório oficial)..."
+# Baixar mapas completos com tilesets do SEU repositório (sem Jitsi)
+echo "📥 Baixando mapas starter-kit do seu repositório (sem Jitsi)..."
 
 # Mapa starter-kit (escritório completo com várias salas)
 mkdir -p maps/starter-kit/tilesets
 cd maps/starter-kit
 
-# Baixar mapas TMJ do repositório oficial
-curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/office.tmj"
-curl -sfLO "https://raw.githubusercontent.com/workadventure/map-starter-kit/master/meeting-room.tmj"
+# Baixar mapas TMJ do SEU repositório (sem Jitsi)
+curl -sfLO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/office.tmj"
+curl -sfLO "https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/maps/starter-kit/conference.tmj"
 
 # Baixar TODOS os tilesets necessários do repositório oficial
 cd tilesets

@@ -89,6 +89,10 @@ echo "📥 Baixando customizações (Keycloak + Mapas)..."
 curl -o docker-compose.keycloak-simple.yaml https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/docker-compose.keycloak-simple.yaml
 curl -o keycloak-realm-import.json https://raw.githubusercontent.com/LucasAmorimLima/workadventure-project/master/keycloak-realm-import.json
 
+# Criar diretório para certificados Let's Encrypt
+mkdir -p wa/letsencrypt
+chmod 700 wa/letsencrypt
+
 # Baixar mapas completos com tilesets do repositório oficial
 echo "📥 Baixando mapas starter-kit do WorkAdventure (repositório oficial)..."
 
